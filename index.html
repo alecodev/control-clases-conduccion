@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Control de clases A2 + B1</title>
+<style>
+  :root{
+    --bg:#f6f7fb; --card:#fff; --text:#1f2937; --muted:#6b7280;
+    --border:#e5e7eb; --ok:#166534; --okbg:#dcfce7;
+    --miss:#991b1b; --missbg:#fee2e2; --accent:#2563eb; --accent2:#1d4ed8;
+    --warn:#92400e; --warnbg:#fef3c7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif;background:var(--bg);color:var(--text)}
+  .wrap{max-width:1050px;margin:auto;padding:24px}
+  h1{margin:0 0 6px;font-size:clamp(1.6rem,3vw,2.3rem)}
+  .sub{color:var(--muted);margin:0 0 18px}
+  .panel,.group{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,.04)}
+  .panel{padding:16px;margin-bottom:18px}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+  label{display:flex;flex-direction:column;gap:5px;font-weight:600;font-size:.9rem}
+  select,button{
+    min-height:42px;border:1px solid var(--border);border-radius:10px;background:#fff;
+    padding:0 12px;font:inherit;color:inherit
+  }
+  button{cursor:pointer;font-weight:700}
+  button.primary{background:var(--accent);color:white;border-color:var(--accent)}
+  button.primary:hover{background:var(--accent2)}
+  button.danger{background:#fff;color:#b91c1c;border-color:#fecaca}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+  .stat{border-radius:12px;padding:12px;background:#f9fafb;border:1px solid var(--border)}
+  .stat b{display:block;font-size:1.35rem}
+  .groups{display:grid;gap:16px}
+  .group{overflow:hidden}
+  .group h2{font-size:1.05rem;margin:0;padding:14px 16px;background:#f9fafb;border-bottom:1px solid var(--border)}
+  .class-row{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border)}
+  .class-row:last-child{border-bottom:0}
+  .name{font-weight:700}
+  .badge{font-size:.78rem;padding:4px 8px;border-radius:999px;font-weight:700;white-space:nowrap}
+  .badge.common{background:#e0e7ff;color:#3730a3}
+  .badge.a2{background:#dbeafe;color:#1d4ed8}
+  .badge.b1{background:#f3e8ff;color:#7e22ce}
+  .status{font-size:.8rem;font-weight:800;padding:5px 8px;border-radius:8px;min-width:72px;text-align:center}
+  .done{background:var(--okbg);color:var(--ok)}
+  .missing{background:var(--missbg);color:var(--miss)}
+  .toggle{min-width:102px}
+  .empty{padding:28px;text-align:center;color:var(--muted)}
+  .urlbox{margin-top:14px;padding:12px;border-radius:10px;background:#f9fafb;border:1px dashed var(--border)}
+  .urlbox code{word-break:break-all;font-size:.78rem;color:#374151}
+  .hint{font-size:.82rem;color:var(--muted);margin-top:6px}
+  @media(max-width:700px){
+    .wrap{padding:14px}
+    .stats{grid-template-columns:1fr}
+    .class-row{grid-template-columns:1fr auto}
+    .class-row .toggle{grid-column:1/-1;width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Control de clases A2 + B1</h1>
+  <p class="sub">Marca las clases vistas. El progreso se guarda automáticamente en la URL.</p>
+
+  <section class="panel">
+    <div class="controls">
+      <label>Licencia
+        <select id="licenseFilter">
+          <option value="all">A2 + B1</option>
+          <option value="A2">Solo A2</option>
+          <option value="B1">Solo B1</option>
+        </select>
+      </label>
+
+      <label>Estado
+        <select id="statusFilter">
+          <option value="all">Todas</option>
+          <option value="missing">Pendientes</option>
+          <option value="done">Completadas</option>
+        </select>
+      </label>
+
+      <button class="danger" id="clearBtn">Limpiar clases</button>
+      <button id="copyBtn">Copiar URL</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span>Total visibles</span><b id="totalCount">0</b></div>
+      <div class="stat"><span>Completadas</span><b id="doneCount">0</b></div>
+      <div class="stat"><span>Pendientes</span><b id="missingCount">0</b></div>
+    </div>
+
+    <div class="urlbox">
+      <strong>Estado guardado en URL</strong>
+      <div class="hint">Puedes copiarla y abrirla después para recuperar tu progreso.</div>
+      <code id="urlText"></code>
+    </div>
+  </section>
+
+  <main id="groups" class="groups"></main>
+</div>
+
+<script>
+const CLASSES = [
+  {id:"n1", group:"Normas de Tránsito", name:"Normas de Tránsito 1", licenses:["A2","B1"]},
+  {id:"n2", group:"Normas de Tránsito", name:"Normas de Tránsito 2", licenses:["A2","B1"]},
+  {id:"n3", group:"Normas de Tránsito", name:"Normas de Tránsito 3", licenses:["A2","B1"]},
+  {id:"n4", group:"Normas de Tránsito", name:"Normas de Tránsito 4", licenses:["A2","B1"]},
+  {id:"n5", group:"Normas de Tránsito", name:"Normas de Tránsito 5", licenses:["A2","B1"]},
+
+  {id:"m1", group:"Movilidad Segura y Sostenible", name:"Movilidad Segura y Sostenible 1", licenses:["A2","B1"]},
+  {id:"m2", group:"Movilidad Segura y Sostenible", name:"Movilidad Segura y Sostenible 2", licenses:["A2","B1"]},
+  {id:"m3", group:"Movilidad Segura y Sostenible", name:"Movilidad Segura y Sostenible 3", licenses:["A2","B1"]},
+  {id:"m4", group:"Movilidad Segura y Sostenible", name:"Movilidad Segura y Sostenible 4", licenses:["A2","B1"]},
+  {id:"m5", group:"Movilidad Segura y Sostenible", name:"Movilidad Segura y Sostenible 5", licenses:["A2","B1"]},
+
+  {id:"s1", group:"Señalización e Infraestructura Vial", name:"Señalización Vial e Infraestructura Vial 1", licenses:["A2","B1"]},
+  {id:"s2", group:"Señalización e Infraestructura Vial", name:"Señalización Vial e Infraestructura Vial 2", licenses:["A2","B1"]},
+
+  {id:"v1", group:"El Vehículo / Taller", name:"El Vehículo / Taller 1", licenses:["A2","B1"]},
+  {id:"v2", group:"El Vehículo / Taller", name:"El Vehículo / Taller 2", licenses:["A2","B1"]},
+  {id:"v3", group:"El Vehículo / Taller", name:"El Vehículo / Taller 3", licenses:["B1"]},
+
+  {id:"ta2", group:"Teoría Específica", name:"Teoría Específica A2", licenses:["A2"]},
+  {id:"tb1", group:"Teoría Específica", name:"Teoría Específica B1-C1", licenses:["B1"]}
+];
+
+const groupOrder = [
+  "Normas de Tránsito",
+  "Movilidad Segura y Sostenible",
+  "Señalización e Infraestructura Vial",
+  "El Vehículo / Taller",
+  "Teoría Específica"
+];
+
+let completed = new Set();
+
+function loadFromUrl(){
+  const hash = location.hash.replace(/^#/, "");
+  const params = new URLSearchParams(hash);
+
+  const raw = params.get("done") || "";
+  completed = new Set(
+    raw.split(",").filter(id => CLASSES.some(c => c.id === id))
+  );
+
+  const license = params.get("license");
+  const status = params.get("status");
+
+  if(["all","A2","B1"].includes(license)){
+    document.getElementById("licenseFilter").value = license;
+  }
+
+  if(["all","missing","done"].includes(status)){
+    document.getElementById("statusFilter").value = status;
+  }
+}
+
+function saveToUrl(){
+  const ordered = CLASSES.map(c => c.id).filter(id => completed.has(id));
+  const params = new URLSearchParams();
+
+  if(ordered.length) params.set("done", ordered.join(","));
+
+  const license = document.getElementById("licenseFilter").value;
+  const status = document.getElementById("statusFilter").value;
+
+  if(license !== "all") params.set("license", license);
+  if(status !== "all") params.set("status", status);
+
+  const hash = params.toString();
+  history.replaceState(
+    null,
+    "",
+    location.pathname + location.search + (hash ? "#" + hash : "")
+  );
+
+  document.getElementById("urlText").textContent = location.href;
+}
+
+function licenseLabel(item){
+  if(item.licenses.length === 2) return '<span class="badge common">A2 + B1</span>';
+  if(item.licenses[0] === "A2") return '<span class="badge a2">A2</span>';
+  return '<span class="badge b1">B1</span>';
+}
+
+function visibleClasses(){
+  const lf = document.getElementById("licenseFilter").value;
+  const sf = document.getElementById("statusFilter").value;
+
+  return CLASSES.filter(c => {
+    const licenseOk = lf === "all" || c.licenses.includes(lf);
+    const isDone = completed.has(c.id);
+    const statusOk = sf === "all" || (sf === "done" ? isDone : !isDone);
+    return licenseOk && statusOk;
+  });
+}
+
+function render(){
+  const items = visibleClasses();
+  const container = document.getElementById("groups");
+  container.innerHTML = "";
+
+  for(const group of groupOrder){
+    const groupItems = items.filter(c => c.group === group);
+    if(!groupItems.length) continue;
+
+    const section = document.createElement("section");
+    section.className = "group";
+    section.innerHTML = `<h2>${group}</h2>`;
+
+    for(const item of groupItems){
+      const isDone = completed.has(item.id);
+      const row = document.createElement("div");
+      row.className = "class-row";
+      row.innerHTML = `
+        <div>
+          <div class="name">${item.name}</div>
+          <div style="margin-top:5px">${licenseLabel(item)}</div>
+        </div>
+        <span class="status ${isDone ? "done" : "missing"}">${isDone ? "Vista" : "Pendiente"}</span>
+        <button class="toggle ${isDone ? "" : "primary"}" data-id="${item.id}">
+          ${isDone ? "Desmarcar" : "Marcar vista"}
+        </button>
+      `;
+      section.appendChild(row);
+    }
+    container.appendChild(section);
+  }
+
+  if(!items.length){
+    container.innerHTML = '<div class="panel empty">No hay clases que coincidan con los filtros.</div>';
+  }
+
+  const lf = document.getElementById("licenseFilter").value;
+  const relevant = CLASSES.filter(c => lf === "all" || c.licenses.includes(lf));
+  const doneRelevant = relevant.filter(c => completed.has(c.id));
+
+  document.getElementById("totalCount").textContent = relevant.length;
+  document.getElementById("doneCount").textContent = doneRelevant.length;
+  document.getElementById("missingCount").textContent = relevant.length - doneRelevant.length;
+  document.getElementById("urlText").textContent = location.href;
+
+  document.querySelectorAll(".toggle").forEach(btn => {
+    btn.addEventListener("click", () => toggleClass(btn.dataset.id));
+  });
+}
+
+function toggleClass(id){
+  const item = CLASSES.find(c => c.id === id);
+  const isDone = completed.has(id);
+  const action = isDone ? "desmarcar como vista" : "marcar como vista";
+
+  if(!confirm(`¿Confirmas que deseas ${action} la clase "${item.name}"?`)) return;
+
+  if(isDone) completed.delete(id);
+  else completed.add(id);
+
+  saveToUrl();
+  render();
+}
+
+document.getElementById("clearBtn").addEventListener("click", () => {
+  if(!completed.size){
+    alert("No hay clases marcadas para limpiar.");
+    return;
+  }
+  if(!confirm("¿Confirmas que deseas limpiar TODAS las clases marcadas como vistas?")) return;
+  completed.clear();
+  saveToUrl();
+  render();
+});
+
+document.getElementById("copyBtn").addEventListener("click", async () => {
+  try{
+    await navigator.clipboard.writeText(location.href);
+    alert("URL copiada al portapapeles.");
+  }catch{
+    prompt("Copia esta URL:", location.href);
+  }
+});
+
+document.getElementById("licenseFilter").addEventListener("change", () => {
+  saveToUrl();
+  render();
+});
+
+document.getElementById("statusFilter").addEventListener("change", () => {
+  saveToUrl();
+  render();
+});
+
+window.addEventListener("hashchange", () => {
+  loadFromUrl();
+  render();
+});
+
+loadFromUrl();
+saveToUrl();
+render();
+</script>
+</body>
+</html>

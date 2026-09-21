@@ -7,7 +7,7 @@ Aplicación web para llevar el control de las clases teóricas necesarias durant
 
 - Consultar las 17 clases organizadas por área temática.
 - Identificar cuáles clases corresponden a A2, B1 o a ambas categorías.
-- Marcar las clases vistas y conocer cuántas quedan pendientes.
+- Marcar las clases vistas, conocer cuántas quedan pendientes y consultar las horas completadas, considerando una duración de dos horas por clase.
 - Filtrar el listado por tipo de licencia y estado de avance.
 - Limpiar el progreso para comenzar un nuevo seguimiento.
 - Copiar una URL que conserva el estado actual.

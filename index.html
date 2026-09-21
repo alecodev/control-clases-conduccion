@@ -28,7 +28,7 @@
   button.primary{background:var(--accent);color:white;border-color:var(--accent)}
   button.primary:hover{background:var(--accent2)}
   button.danger{background:#fff;color:#b91c1c;border-color:#fecaca}
-  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
   .stat{border-radius:12px;padding:12px;background:#f9fafb;border:1px solid var(--border)}
   .stat b{display:block;font-size:1.35rem}
   .groups{display:grid;gap:16px}
@@ -88,6 +88,7 @@
       <div class="stat"><span>Total visibles</span><b id="totalCount">0</b></div>
       <div class="stat"><span>Completadas</span><b id="doneCount">0</b></div>
       <div class="stat"><span>Pendientes</span><b id="missingCount">0</b></div>
+      <div class="stat"><span>Horas vistas</span><b id="hoursCount">0 h</b></div>
     </div>
 
     <div class="urlbox">
@@ -124,6 +125,8 @@ const CLASSES = [
   {id:"ta2", group:"Teoría Específica", name:"Teoría Específica A2", licenses:["A2"]},
   {id:"tb1", group:"Teoría Específica", name:"Teoría Específica B1-C1", licenses:["B1"]}
 ];
+
+const CLASS_DURATION_HOURS = 2;
 
 const groupOrder = [
   "Normas de Tránsito",
@@ -239,6 +242,7 @@ function render(){
   document.getElementById("totalCount").textContent = relevant.length;
   document.getElementById("doneCount").textContent = doneRelevant.length;
   document.getElementById("missingCount").textContent = relevant.length - doneRelevant.length;
+  document.getElementById("hoursCount").textContent = `${doneRelevant.length * CLASS_DURATION_HOURS} h`;
   document.getElementById("urlText").textContent = location.href;
 
   document.querySelectorAll(".toggle").forEach(btn => {

@@ -20,10 +20,12 @@
   .panel{padding:16px;margin-bottom:18px}
   .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
   label{display:flex;flex-direction:column;gap:5px;font-weight:600;font-size:.9rem}
-  select,button{
+  select,input,button{
     min-height:42px;border:1px solid var(--border);border-radius:10px;background:#fff;
     padding:0 12px;font:inherit;color:inherit
   }
+  .search{flex:1 1 240px}
+  .search input{width:100%}
   button{cursor:pointer;font-weight:700}
   button.primary{background:var(--accent);color:white;border-color:var(--accent)}
   button.primary:hover{background:var(--accent2)}
@@ -80,12 +82,16 @@
         </select>
       </label>
 
+      <label class="search">Buscar
+        <input id="searchInput" type="search" placeholder="Nombre o tema de la clase" autocomplete="off" />
+      </label>
+
       <button class="danger" id="clearBtn">Limpiar clases</button>
       <button id="copyBtn">Copiar URL</button>
     </div>
 
     <div class="stats">
-      <div class="stat"><span>Total visibles</span><b id="totalCount">0</b></div>
+      <div class="stat"><span>Clases totales</span><b id="totalCount">0</b></div>
       <div class="stat"><span>Completadas</span><b id="doneCount">0</b></div>
       <div class="stat"><span>Pendientes</span><b id="missingCount">0</b></div>
       <div class="stat"><span>Horas vistas</span><b id="hoursCount">0 h</b></div>
@@ -157,6 +163,7 @@ function loadFromUrl(){
   if(["all","missing","done"].includes(status)){
     document.getElementById("statusFilter").value = status;
   }
+
 }
 
 function saveToUrl(){
@@ -187,15 +194,24 @@ function licenseLabel(item){
   return '<span class="badge b1">B1</span>';
 }
 
+function normalizeText(value){
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 function visibleClasses(){
   const lf = document.getElementById("licenseFilter").value;
   const sf = document.getElementById("statusFilter").value;
+  const query = normalizeText(document.getElementById("searchInput").value.trim());
 
   return CLASSES.filter(c => {
     const licenseOk = lf === "all" || c.licenses.includes(lf);
     const isDone = completed.has(c.id);
     const statusOk = sf === "all" || (sf === "done" ? isDone : !isDone);
-    return licenseOk && statusOk;
+    const searchOk = !query || normalizeText(`${c.name} ${c.group}`).includes(query);
+    return licenseOk && statusOk && searchOk;
   });
 }
 
@@ -235,14 +251,14 @@ function render(){
     container.innerHTML = '<div class="panel empty">No hay clases que coincidan con los filtros.</div>';
   }
 
-  const lf = document.getElementById("licenseFilter").value;
-  const relevant = CLASSES.filter(c => lf === "all" || c.licenses.includes(lf));
+  const license = document.getElementById("licenseFilter").value;
+  const relevant = CLASSES.filter(c => license === "all" || c.licenses.includes(license));
   const doneRelevant = relevant.filter(c => completed.has(c.id));
 
   document.getElementById("totalCount").textContent = relevant.length;
   document.getElementById("doneCount").textContent = doneRelevant.length;
   document.getElementById("missingCount").textContent = relevant.length - doneRelevant.length;
-  document.getElementById("hoursCount").textContent = `${doneRelevant.length * CLASS_DURATION_HOURS} h`;
+  document.getElementById("hoursCount").textContent = `${completed.size * CLASS_DURATION_HOURS} h`;
   document.getElementById("urlText").textContent = location.href;
 
   document.querySelectorAll(".toggle").forEach(btn => {
@@ -291,6 +307,10 @@ document.getElementById("licenseFilter").addEventListener("change", () => {
 
 document.getElementById("statusFilter").addEventListener("change", () => {
   saveToUrl();
+  render();
+});
+
+document.getElementById("searchInput").addEventListener("input", () => {
   render();
 });
 

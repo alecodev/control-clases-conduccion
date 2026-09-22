@@ -8,6 +8,7 @@ Aplicación web para llevar el control de las clases teóricas necesarias durant
 - Consultar las 17 clases organizadas por área temática.
 - Identificar cuáles clases corresponden a A2, B1 o a ambas categorías.
 - Marcar las clases vistas, conocer cuántas quedan pendientes y consultar el total global de horas completadas, considerando una duración de dos horas por clase.
+- Registrar la fecha y la hora en que se completó cada clase.
 - Filtrar el listado por tipo de licencia y estado de avance.
 - Buscar clases por su nombre o área temática.
 - Limpiar el progreso para comenzar un nuevo seguimiento.
@@ -25,7 +26,7 @@ El seguimiento incluye las siguientes áreas:
 
 ## Privacidad y almacenamiento
 
-La aplicación no requiere registro y no envía información a un servidor. El avance se guarda dentro de la propia URL, por lo que puede conservarse o compartirse copiando el enlace completo.
+La aplicación no requiere registro y no envía información a un servidor. El avance y las fechas de las clases se guardan dentro de la propia URL, por lo que pueden conservarse o compartirse copiando el enlace completo.
 
 ## Licencia
 

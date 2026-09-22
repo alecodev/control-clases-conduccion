@@ -39,6 +39,7 @@
   .class-row{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border)}
   .class-row:last-child{border-bottom:0}
   .name{font-weight:700}
+  .completed-at{margin-top:5px;font-size:.8rem;color:var(--muted)}
   .badge{font-size:.78rem;padding:4px 8px;border-radius:999px;font-weight:700;white-space:nowrap}
   .badge.common{background:#e0e7ff;color:#3730a3}
   .badge.a2{background:#dbeafe;color:#1d4ed8}
@@ -143,6 +144,7 @@ const groupOrder = [
 ];
 
 let completed = new Set();
+let completedAt = new Map();
 
 function loadFromUrl(){
   const hash = location.hash.replace(/^#/, "");
@@ -152,6 +154,19 @@ function loadFromUrl(){
   completed = new Set(
     raw.split(",").filter(id => CLASSES.some(c => c.id === id))
   );
+
+  completedAt = new Map();
+  const rawDates = params.get("at") || "";
+
+  for(const entry of rawDates.split(",")){
+    const [id, rawTimestamp] = entry.split(":");
+    const timestamp = Number(rawTimestamp);
+    const date = new Date(timestamp);
+
+    if(completed.has(id) && timestamp > 0 && !Number.isNaN(date.getTime())){
+      completedAt.set(id, timestamp);
+    }
+  }
 
   const license = params.get("license");
   const status = params.get("status");
@@ -171,6 +186,12 @@ function saveToUrl(){
   const params = new URLSearchParams();
 
   if(ordered.length) params.set("done", ordered.join(","));
+
+  const dates = ordered
+    .filter(id => completedAt.has(id))
+    .map(id => `${id}:${completedAt.get(id)}`);
+
+  if(dates.length) params.set("at", dates.join(","));
 
   const license = document.getElementById("licenseFilter").value;
   const status = document.getElementById("statusFilter").value;
@@ -199,6 +220,15 @@ function normalizeText(value){
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
+}
+
+function formatCompletedAt(timestamp){
+  if(!timestamp) return "Fecha y hora no disponibles";
+
+  return new Intl.DateTimeFormat("es-CO", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  }).format(new Date(timestamp));
 }
 
 function visibleClasses(){
@@ -236,6 +266,7 @@ function render(){
         <div>
           <div class="name">${item.name}</div>
           <div style="margin-top:5px">${licenseLabel(item)}</div>
+          ${isDone ? `<div class="completed-at">Marcada el ${formatCompletedAt(completedAt.get(item.id))}</div>` : ""}
         </div>
         <span class="status ${isDone ? "done" : "missing"}">${isDone ? "Vista" : "Pendiente"}</span>
         <button class="toggle ${isDone ? "" : "primary"}" data-id="${item.id}">
@@ -273,8 +304,13 @@ function toggleClass(id){
 
   if(!confirm(`¿Confirmas que deseas ${action} la clase "${item.name}"?`)) return;
 
-  if(isDone) completed.delete(id);
-  else completed.add(id);
+  if(isDone){
+    completed.delete(id);
+    completedAt.delete(id);
+  }else{
+    completed.add(id);
+    completedAt.set(id, Date.now());
+  }
 
   saveToUrl();
   render();
@@ -287,6 +323,7 @@ document.getElementById("clearBtn").addEventListener("click", () => {
   }
   if(!confirm("¿Confirmas que deseas limpiar TODAS las clases marcadas como vistas?")) return;
   completed.clear();
+  completedAt.clear();
   saveToUrl();
   render();
 });
